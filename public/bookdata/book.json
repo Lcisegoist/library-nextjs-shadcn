@@ -1,0 +1,136 @@
+[
+  {
+    "id": 1,
+    "name": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "category": "Novel",
+    "cover": "1",
+    "description": "A classic"
+  },
+  {
+    "id": 2,
+    "name": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "category": "Novel",
+    "cover": "2",
+    "description": "A story of racial injustice and childhood innocence",
+    "stock": "23"
+  },
+  {
+    "id": 3,
+    "name": "1984",
+    "author": "George Orwell",
+    "category": "Novel",
+    "cover": "3",
+    "description": "A dystopian social science fiction novel",
+    "stock": "18"
+  },
+  {
+    "id": 4,
+    "name": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "category": "Novel",
+    "cover": "4",
+    "description": "A romantic novel of manners",
+    "stock": "12"
+  },
+  {
+    "id": 5,
+    "name": "The Catcher in the Rye",
+    "author": "J.D. Salinger",
+    "category": "Novel",
+    "cover": "5",
+    "description": "A coming-of-age story about teenage rebellion",
+    "stock": "20"
+  },
+  {
+    "id": 6,
+    "name": "Lord of the Flies",
+    "author": "William Golding",
+    "category": "Novel",
+    "cover": "6",
+    "description": "A story about British boys stranded on an island",
+    "stock": "14"
+  },
+  {
+    "id": 7,
+    "name": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "category": "Fantasy",
+    "cover": "7",
+    "description": "A fantasy novel about a hobbit's adventure",
+    "stock": "25"
+  },
+  {
+    "id": 8,
+    "name": "Harry Potter and the Philosopher's Stone",
+    "author": "J.K. Rowling",
+    "category": "Fantasy",
+    "cover": "8",
+    "description": "The first book in the Harry Potter series",
+    "stock": "30"
+  },
+  {
+    "id": 9,
+    "name": "The Chronicles of Narnia",
+    "author": "C.S. Lewis",
+    "category": "Fantasy",
+    "cover": "9",
+    "description": "A series of fantasy novels for children",
+    "stock": "22"
+  },
+  {
+    "id": 10,
+    "name": "The Da Vinci Code",
+    "author": "Dan Brown",
+    "category": "Mystery",
+    "cover": "10",
+    "description": "A mystery thriller novel",
+    "stock": "16"
+  },
+  {
+    "id": 11,
+    "name": "Gone Girl",
+    "author": "Gillian Flynn",
+    "category": "Mystery",
+    "cover": "11",
+    "description": "A psychological thriller about a missing wife",
+    "stock": "19"
+  },
+  {
+    "id": 12,
+    "name": "The Girl with the Dragon Tattoo",
+    "author": "Stieg Larsson",
+    "category": "Mystery",
+    "cover": "12",
+    "description": "实际上最大角度看文档卡为大家 阿斯达克急急急急急急急急急急急急急急急askjh 卡萨丁",
+    "stock": "17"
+  },
+  {
+    "id": 13,
+    "name": "Sapiens",
+    "author": "Yuval Noah Harari",
+    "category": "History",
+    "cover": "13",
+    "description": "A brief history of humankind",
+    "stock": "21"
+  },
+  {
+    "id": 14,
+    "name": "The Art of War",
+    "author": "Sun Tzu",
+    "category": "Philosophy",
+    "cover": "14",
+    "description": "An ancient Chinese military treatise",
+    "stock": "13"
+  },
+  {
+    "id": 15,
+    "name": "Thinking, Fast and Slow",
+    "author": "Daniel Kahneman",
+    "category": "Psychology",
+    "cover": "15",
+    "description": "A book about human decision-making",
+    "stock": "24"
+  }
+]

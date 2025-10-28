@@ -32,15 +32,21 @@ export interface Category {
   value: string;
 }
 
-export type BookCategory =
-  | "Novel"
-  | "Fantasy"
-  | "Mystery"
-  | "History"
-  | "Philosophy"
-  | "Psychology"
-  | "Science Fiction"
-  | "Biography";
+// 定义分类常量数组（用于遍历、渲染下拉框等）
+export const BOOK_CATEGORIES = [
+  "Novel",
+  "Fantasy",
+  "Mystery",
+  "History",
+  "Philosophy",
+  "Psychology",
+  "Science Fiction",
+  "Biography",
+] as const;
+
+// 从数组推导出类型（用于类型约束）
+//"Novel" | "Fantasy" | "Mystery" | "History" | "Philosophy" | "Psychology" | "Science Fiction" | "Biography"
+export type BookCategory = (typeof BOOK_CATEGORIES)[number];
 
 export interface PaginationState {
   pageIndex: number;

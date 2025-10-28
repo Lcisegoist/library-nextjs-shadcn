@@ -29,7 +29,7 @@ import { getBookList } from "@/apis/bookGet";
 // } from "@/components/ui/table";
 
 import SelectSearch from "@/components/ui/SelectSearch";
-import { Book, Category, PaginationState } from "@/types";
+import { Book, Category, PaginationState, BOOK_CATEGORIES } from "@/types";
 
 const formSchema = z.object({
   title: z.string().optional(),
@@ -99,16 +99,11 @@ export default function Books() {
   // 例如：显示当前分页信息、传递给其他组件等
   //console.log("存储的分页状态:", currentPagination);
 
-  const categories: Category[] = [
-    { label: "Novel", value: "Novel" },
-    { label: "Fantasy", value: "Fantasy" },
-    { label: "Mystery", value: "Mystery" },
-    { label: "History", value: "History" },
-    { label: "Philosophy", value: "Philosophy" },
-    { label: "Psychology", value: "Psychology" },
-    { label: "Science Fiction", value: "Science Fiction" },
-    { label: "Biography", value: "Biography" },
-  ];
+  // 使用 BOOK_CATEGORIES 数组自动生成分类选项
+  const categories: Category[] = BOOK_CATEGORIES.map((cat) => ({
+    label: cat,
+    value: cat,
+  }));
   const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema), //每次表单变化时都会触发zod验证
     defaultValues: {

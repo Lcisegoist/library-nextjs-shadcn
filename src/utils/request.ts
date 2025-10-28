@@ -4,14 +4,14 @@ import type { AxiosRequestConfig, AxiosInstance } from 'axios';
 import Router from 'next/router';
 import { toast } from 'sonner';
 interface AxiosInstanceType extends AxiosInstance {
-  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
-  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
-  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
-  options<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  head<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  request<T = unknown>(config: AxiosRequestConfig): Promise<T>;
+  get<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  delete<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  options<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  head<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  request<T>(config: AxiosRequestConfig): Promise<T>;
 }
 
 const axiosInstance = (config: AxiosRequestConfig): AxiosInstanceType => {

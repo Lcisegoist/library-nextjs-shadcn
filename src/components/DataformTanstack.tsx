@@ -103,7 +103,7 @@ const DataformTanstack = ({
     ],
     []
   );
-
+  console.log("columns:", passinData);
   // 状态管理
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,

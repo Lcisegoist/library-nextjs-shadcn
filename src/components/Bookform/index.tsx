@@ -3,6 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -21,53 +23,82 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BOOK_CATEGORIES } from "@/types/book";
+import { Book, BOOK_CATEGORIES } from "@/types/book";
 import DatePicker from "@/components/ui/DatePicker";
-
+import { BookPost } from "@/apis/book";
+import {
+  AlertDialog,
+  AlertDialogFooter,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 const formSchema = z.object({
-  bookName: z.string().min(1, {
+  name: z.string().min(1, {
     message: "书名不能为空",
   }),
   author: z.string().min(1, {
     message: "作者不能为空",
   }),
+
   category: z.string().min(1, {
     message: "分类不能为空",
   }),
-  Cover: z.string().min(1, {
-    message: "封面不能为空",
-  }),
-  publishedAt: z.date({
-    message: "出版日期不能为空",
-  }),
-  stock: z.number().min(1, {
-    message: "库存不能为空",
-  }),
-  description: z.string().min(1, {
-    message: "描述不能为空",
-  }),
+  cover: z.string().min(1),
+  publishedAt: z.date(),
+  stock: z.number().min(0),
+  description: z.string().min(1),
 });
 
 const BookForm = () => {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [previewCover, setPreviewCover] = useState<string | null>(null);
+
+  //接收form的信息
+  const [formData, setFormData] = useState<z.infer<typeof formSchema> | null>(
+    null
+  );
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      bookName: "",
+      name: "",
       author: "",
       category: "",
-      Cover: "",
+      cover: "",
       publishedAt: undefined,
       stock: 0,
       description: "",
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  //提交表单
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setFormData(values);
+    // 将 Date 对象转换为 number（时间戳，单位：秒）
+    const bookData: Book = {
+      ...values,
+      publishedAt: values.publishedAt
+        ? Math.floor(values.publishedAt.getTime() / 1000)
+        : 0,
+    };
+    console.log("bookData:", bookData);
+    await BookPost(bookData);
+    setOpenDialog(true);
+    setPreviewCover(null);
   }
+
+  const handleConfirm = () => {
+    // 在这里处理确认后的逻辑
+    console.log("Confirmed data:", formData);
+    form.reset();
+    setPreviewCover(null);
+    setOpenDialog(false);
+    router.push("/books");
+  };
 
   return (
     <Form {...form}>
@@ -77,7 +108,7 @@ const BookForm = () => {
       >
         <FormField
           control={form.control}
-          name="bookName"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Book Name</FormLabel>
@@ -130,17 +161,44 @@ const BookForm = () => {
         />
         <FormField
           control={form.control}
-          name="Cover"
+          name="cover"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cover</FormLabel>
               <FormControl>
-                <Input placeholder="Enter" {...field} />
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Enter"
+                    value={field.value as string}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      console.log("field.value:", field.value);
+                      setPreviewCover(field.value);
+                    }}
+                  >
+                    预览
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        {previewCover && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewCover}
+            alt="Cover preview"
+            width={313}
+            height={180}
+          />
+        )}
         <FormField
           control={form.control}
           name="publishedAt"
@@ -165,7 +223,10 @@ const BookForm = () => {
                   type="number"
                   className="w-fit"
                   placeholder="Enter"
-                  {...field}
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(Number(e.target.value));
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -193,6 +254,30 @@ const BookForm = () => {
 
         <Button type="submit">Submit</Button>
       </form>
+
+      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>提交成功!</AlertDialogTitle>
+            <AlertDialogDescription>
+              您可以继续添加新的书籍信息，或者前往书籍列表页查看。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                form.reset();
+                setOpenDialog(false);
+              }}
+            >
+              继续添加
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              前往列表
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 };

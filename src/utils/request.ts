@@ -22,6 +22,11 @@ const axiosInstance = (config: AxiosRequestConfig): AxiosInstanceType => {
   //请求拦截器,进行请求的改造
   instance.interceptors.request.use(
     (config) => {
+      console.log('发送请求:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        data: config.data,
+      });
       return config;
     },
     (error) => {

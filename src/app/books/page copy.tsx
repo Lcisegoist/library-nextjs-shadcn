@@ -16,7 +16,7 @@ import * as ReactHookForm from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { getBookList } from "@/apis/bookGet";
+import { getBookList } from "@/apis/book";
 // import {
 //   Table,
 //   TableBody,

@@ -13,3 +13,14 @@ export const getBookList = async (params?: QueryParams): Promise<Book[]> => {
     throw error;
   }
 };
+
+export const BookPost = async (params: Book) => {
+  try {
+    const result = await axiosInstance.post('/api/books', params);
+    return result;
+  }
+  catch (error) {
+    console.error('添加数据失败:', error);
+    throw error;
+  }
+}

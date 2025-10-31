@@ -6,6 +6,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "loremflickr.com",
       },
+      {
+        protocol: "https",
+        hostname: "localhost",
+        port: "3000"
+      }
     ],
   },
   async rewrites() {

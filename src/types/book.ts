@@ -3,8 +3,8 @@
  */
 
 export interface Book {
-  createdAt: string;
-  id: number;
+  publishedAt: number;
+  id?: number;
   name: string;
   author: string;
   category: string;
@@ -14,9 +14,13 @@ export interface Book {
 }
 
 export interface BookFormData {
-  title: string;
+  bookName: string;
   author: string;
   category: string;
+  Cover: string;
+  publishedAt: Date;
+  stock: number;
+  description: string;
 }
 
 export interface QueryParams {

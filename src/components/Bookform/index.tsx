@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -24,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Book, BOOK_CATEGORIES } from "@/types/book";
-import DatePicker from "@/components/ui/DatePicker";
+import DatePicker from "@/components/ui/date-picker";
 import { BookPost } from "@/apis/book";
 import {
   AlertDialog,
@@ -47,16 +48,15 @@ const formSchema = z.object({
   category: z.string().min(1, {
     message: "分类不能为空",
   }),
-  cover: z.string().min(1),
-  publishedAt: z.date(),
+  cover: z.string(),
+  publishedAt: z.date().optional(),
   stock: z.number().min(0),
-  description: z.string().min(1),
+  description: z.string(),
 });
 
 const BookForm = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [previewCover, setPreviewCover] = useState<string | null>(null);
-
   //接收form的信息
   const [formData, setFormData] = useState<z.infer<typeof formSchema> | null>(
     null
@@ -111,7 +111,9 @@ const BookForm = () => {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Book Name</FormLabel>
+              <FormLabel className="before:content-['*'] before:text-red-500">
+                Book Name
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Enter" {...field} />
               </FormControl>
@@ -124,7 +126,9 @@ const BookForm = () => {
           name="author"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Author</FormLabel>
+              <FormLabel className="before:content-['*'] before:text-red-500">
+                Author
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Enter" {...field} />
               </FormControl>
@@ -137,7 +141,9 @@ const BookForm = () => {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel className="before:content-['*'] before:text-red-500">
+                Category
+              </FormLabel>
               <FormControl>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger>
@@ -159,6 +165,7 @@ const BookForm = () => {
             </FormItem>
           )}
         />
+        {/* 封面 */}
         <FormField
           control={form.control}
           name="cover"
@@ -199,6 +206,7 @@ const BookForm = () => {
             height={180}
           />
         )}
+        {/* 出版日期 */}
         <FormField
           control={form.control}
           name="publishedAt"
@@ -212,6 +220,7 @@ const BookForm = () => {
             </FormItem>
           )}
         />
+        {/* 库存 */}
         <FormField
           control={form.control}
           name="stock"

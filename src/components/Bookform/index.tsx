@@ -85,6 +85,10 @@ const BookForm = () => {
         ? Math.floor(values.publishedAt.getTime() / 1000)
         : 0,
     };
+    if (bookData.publishedAt > Date.now() / 1000) {
+      toast.error("出版日期不能大于当前日期");
+      return;
+    }
     console.log("bookData:", bookData);
     await BookPost(bookData);
     setOpenDialog(true);

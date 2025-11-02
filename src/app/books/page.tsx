@@ -9,6 +9,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import Content from "@/components/Content";
 import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -91,13 +92,8 @@ export default function Books() {
       原始pageIndex: pagination.pageIndex, // 从0开始
     });
 
-    // 使用最新的 pagination 参数，而不是 currentPagination 状态
     getBookList(pagination);
   }, []);
-
-  // 你可以在这里使用 currentPagination 状态
-  // 例如：显示当前分页信息、传递给其他组件等
-  //console.log("存储的分页状态:", currentPagination);
 
   // 使用 BOOK_CATEGORIES 数组自动生成分类选项
   const categories: Category[] = BOOK_CATEGORIES.map((cat) => ({
@@ -117,87 +113,88 @@ export default function Books() {
   //   router.push("/books/edit/id1");
   // }
   return (
-    <div className="p-4">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit1)} //提交时触发验证
-          className="flex flex-row gap-12"
-        >
-          <div className="w-52">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Book title"
-                      className="w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="w-52">
-            <FormField
-              control={form.control}
-              name="author"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Author</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Author name"
-                      className="w-full"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="w-52">
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <SelectSearch
-                      categories={categories}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+    <Content title="图书列表" url="/books/add">
+      <>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit1)} //提交时触发验证
+            className="flex flex-row gap-12"
+          >
+            <div className="w-52">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Book title"
+                        className="w-full"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="w-52">
+              <FormField
+                control={form.control}
+                name="author"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Author</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Author name"
+                        className="w-full"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="w-52">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectSearch
+                        categories={categories}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <span className="flex items-end">
-            <Button type="submit">Submit</Button>
-          </span>
-          <span className="flex items-end">
-            <Button
-              type="reset"
-              onClick={() => {
-                form.reset();
-              }}
-            >
-              Clear
-            </Button>
-          </span>
-        </form>
-      </Form>
+            <span className="flex items-end">
+              <Button type="submit">Search</Button>
+            </span>
+            <span className="flex items-end">
+              <Button
+                type="reset"
+                onClick={() => {
+                  form.reset();
+                }}
+              >
+                Clear
+              </Button>
+            </span>
+          </form>
+        </Form>
 
-      {/* <Table>
+        {/* <Table>
         <TableCaption>the list of our books.</TableCaption>
         <TableHeader>
           <TableRow>
@@ -249,10 +246,11 @@ export default function Books() {
         </TableBody>
         <TableFooter></TableFooter>
       </Table> */}
-      <DataformTanstack
-        passinData={bookData}
-        onPaginationChange={handlePaginationChange}
-      />
-    </div>
+        <DataformTanstack
+          passinData={bookData}
+          onPaginationChange={handlePaginationChange}
+        />
+      </>
+    </Content>
   );
 }

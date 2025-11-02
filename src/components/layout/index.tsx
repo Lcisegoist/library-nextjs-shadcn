@@ -1,3 +1,5 @@
+"use client";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
@@ -17,12 +19,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { PageTitleProvider, usePageTitle } from "@/components/PageTitleContext";
+
 import { Button } from "@/components/ui/button";
 import { DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { PropsWithChildren } from "react";
+import { useRouter } from "next/navigation";
 
-const Layout: React.FC<PropsWithChildren> = ({ children }) => {
+const LayoutInner: React.FC<PropsWithChildren> = ({ children }) => {
+  const router = useRouter();
+  const { Title } = usePageTitle();
+
   return (
     <div className="flex h-screen flex-col">
       {/* 独立的顶部栏 */}
@@ -35,7 +43,7 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
             height={32}
             className="rounded"
           />
-          <h1 className="text-lg font-semibold">图书管理系统</h1>
+          <h1 className="text-lg font-mono">图书管理系统</h1>
         </div>
 
         <div className="flex items-center">
@@ -94,7 +102,27 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
 
             {/* 主要内容区域 */}
             <div className="flex-1 p-4 bg-slate-100 overflow-auto">
-              <div className="pl-2  bg-white rounded-lg min-h-full overflow-auto">
+              {/* title区域 */}
+              <div className="flex items-center justify-between">
+                {Title && (
+                  <div className="mb-2 pb-2">
+                    <h2 className="text-xl font-mono">{Title.title}</h2>
+                  </div>
+                )}
+                {Title?.url && (
+                  <Button
+                    variant="outline"
+                    className="mb-3 pb-2"
+                    onClick={() => {
+                      router.push(Title.url);
+                    }}
+                  >
+                    添加
+                  </Button>
+                )}
+              </div>
+
+              <div className="pl-2 bg-white rounded-lg min-h-full overflow-auto">
                 {children}
               </div>
             </div>
@@ -104,4 +132,13 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
     </div>
   );
 };
+
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <PageTitleProvider>
+      <LayoutInner>{children}</LayoutInner>
+    </PageTitleProvider>
+  );
+};
+
 export default Layout;

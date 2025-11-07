@@ -5,7 +5,8 @@
 
 // 导出图书相关类型
 export * from './book';
-
+export * from './category';
+export * from './form';
 // 可以在这里添加其他类型的导出
 // export type { User, UserRole } from './user';
 // export type { ApiResponse, ApiError } from './api';

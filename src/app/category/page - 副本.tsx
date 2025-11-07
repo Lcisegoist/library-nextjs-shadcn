@@ -10,14 +10,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Content from "@/components/Content";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import * as ReactHookForm from "react-hook-form";
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 // import { useRouter } from "next/navigation";
-import { getBookList } from "@/apis/book";
+import { getCategoryList } from "@/apis/category";
 // import {
 //   Table,
 //   TableBody,
@@ -29,105 +30,95 @@ import { getBookList } from "@/apis/book";
 //   TableRow,
 // } from "@/components/ui/table";
 
+import { Category, PaginationState } from "@/types";
 import SelectSearch from "@/components/ui/SelectSearch";
-import {
-  Book,
-  Category,
-  BookType,
-  PaginationState,
-  BOOK_CATEGORIES,
-} from "@/types";
 
 const formSchema = z.object({
-  title: z.string().optional(),
-  author: z.string().optional(),
-  category: z.string().optional(),
+  name: z.string().optional(),
+  level: z.string().optional(),
 });
+const Level_example = [
+  { label: "Level 1", value: "1" },
+  { label: "Level 2", value: "2" },
+  { label: "Level 3", value: "3" },
+];
 
-//Bookform的格式
-export function Bookform() {
-  const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema), // zod + react-hook-form 联动
-    //mode: "onChange", 设置触发zod验证的时机
-    defaultValues: {
-      title: "",
-      author: "",
-      category: "",
-    },
-  });
+//categoryform的格式
+// export function Categoryform() {
+//   const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
+//     resolver: zodResolver(formSchema), // zod + react-hook-form 联动
+//     //mode: "onChange", 设置触发zod验证的时机
+//     defaultValues: {
+//       name: "",
+//       level: "",
+//     },
+//   });
 
-  return form;
-}
+//   return form;
+// }
 
-export default function Books() {
-  //提交处理
-  function onSubmit1(values: z.infer<typeof formSchema>) {
-    console.log("values:", values);
-
-    getBookList({ ...values, ...currentPagination });
-  }
-  const [bookData, setBookData] = useState<Book[]>([]);
+export default function Categorys() {
+  const [categoryData, setCategoryData] = useState<Category[]>([]);
   //存储分页情况
   const [currentPagination, setCurrentPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
 
-  // 使用 useRef 防止 React StrictMode 导致的重复请求
-  const hasFetchedRef = useRef(false);
+  const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema), //每次表单变化时都会触发zod验证
+    defaultValues: {
+      name: "",
+      level: "",
+    },
+  });
 
-  //引入book的数据
+  // 统一的获取数据函数，带上表单和分页信息
+  // 注意：不将 form 作为依赖，因为 form.getValues() 是方法调用，总是能获取最新值
+
+  // 初始加载和分页变化时获取数据
   useEffect(() => {
-    // 防止 StrictMode 导致的重复请求
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-
     console.log("refreshed:");
     async function fetchBooklist() {
       try {
-        const data = await getBookList();
-        setBookData(data);
+        const data = await getCategoryList();
+        setCategoryData(data);
       } catch (error) {
         console.error("获取书籍列表失败:", error);
       }
     }
     fetchBooklist();
-  }, []); // 空依赖数组，只在组件挂载时执行一次
-  // const router = useRouter();
-
-  // 处理分页变化 - 使用 useCallback 避免不必要的重新渲染
-  const handlePaginationChange = useCallback((pagination: PaginationState) => {
-    //pagination包含最新的页码信息
-    setCurrentPagination(pagination);
-    console.log("当前分页状态:", {
-      当前页码: pagination.pageIndex + 1, // 显示从1开始的页码
-      每页条数: pagination.pageSize,
-      原始pageIndex: pagination.pageIndex, // 从0开始
-    });
-
-    getBookList(pagination);
   }, []);
 
-  // 使用 BOOK_CATEGORIES 数组自动生成分类选项
-  const categories: BookType[] = BOOK_CATEGORIES.map((cat) => ({
-    label: cat,
-    value: cat,
-  }));
-  const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema), //每次表单变化时都会触发zod验证
-    defaultValues: {
-      title: "",
-      author: "",
-      category: "",
-    },
-  });
+  //搜索
+  const onSubmit1 = useCallback(async (values: z.infer<typeof formSchema>) => {
+    console.log("category values:", values);
+    // 点击搜索时，自动回到第一页
+    setCurrentPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    // 注意：分页变化会触发 fetchCategorylist，所以这里不需要手动调用
+  }, []);
+
+  //分页变化（由 DataformTanstack 调用）
+  const handlePaginationChange = useCallback((pagination: PaginationState) => {
+    setCurrentPagination(pagination);
+  }, []);
+
+  //删除后刷新
+  // const handleDeleteSuccess = useCallback(() => {
+  //   fetchCategorylist();
+  // }, [fetchCategorylist]);
+
+  //当分页变化时自动请求
+  // useEffect(() => {
+  //   fetchCategorylist();
+  // }, [currentPagination, fetchCategorylist]);
 
   // function handleEdit() {
   //   router.push("/books/edit/id1");
   // }
-  console.log("book category", categories);
+  console.log("categories:", Level_example);
   return (
-    <Content title="图书列表" url="/books/add">
+    <Content title="分类列表" url="/category/add">
       <>
         <Form {...form}>
           <form
@@ -137,10 +128,10 @@ export default function Books() {
             <div className="w-52">
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>Category</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Book title"
@@ -156,32 +147,14 @@ export default function Books() {
             <div className="w-52">
               <FormField
                 control={form.control}
-                name="author"
+                name="level"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Author</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Author name"
-                        className="w-full"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="w-52">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Level</FormLabel>
                     <FormControl>
                       <SelectSearch
-                        categories={categories}
+                        label="level"
+                        categories={Level_example}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -261,8 +234,9 @@ export default function Books() {
         <TableFooter></TableFooter>
       </Table> */}
         <DataformTanstack
-          passinData={bookData}
+          passinData={categoryData}
           onPaginationChange={handlePaginationChange}
+          // onDeleteSuccess={handleDeleteSuccess}
         />
       </>
     </Content>

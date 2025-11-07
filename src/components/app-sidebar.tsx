@@ -62,16 +62,16 @@ const data = {
     },
     {
       title: "分类管理",
-      url: "categories",
+      url: "category",
       icon: BookOpen,
       items: [
         {
           title: "分类列表",
-          url: "categories/list",
+          url: "category",
         },
         {
           title: "分类添加",
-          url: "categories/add",
+          url: "category/add",
         },
       ],
     },

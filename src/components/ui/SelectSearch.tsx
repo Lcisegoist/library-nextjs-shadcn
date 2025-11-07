@@ -29,10 +29,12 @@ export default function SelectSearch({
   value,
   onChange,
   categories,
+  label,
 }: {
   value?: string;
   onChange: (value: string) => void;
   categories: { label: string; value: string }[];
+  label?: string;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -49,8 +51,11 @@ export default function SelectSearch({
             }`}
           >
             {value
-              ? categories.find((c) => c.value === value)?.label
-              : "Select category..."}
+              ? categories.find((c) => c.value === value)?.value
+              : label
+              ? `Select ${label}...`
+              : "Select..."}
+            {/* 展开上下文的icon */}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -62,6 +67,7 @@ export default function SelectSearch({
               {categories.map((c) => (
                 <CommandItem
                   key={c.value}
+                  value={c.value}
                   onSelect={(currentValue) => {
                     onChange(currentValue === value ? "" : currentValue);
                     setOpen(false);

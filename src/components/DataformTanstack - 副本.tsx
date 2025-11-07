@@ -60,7 +60,7 @@ const DataformTanstack = ({
   onDeleteSuccess,
 }: DataformProps) => {
   const router = useRouter();
-  console.log("表格渲染passinData:", passinData);
+  console.log("passinData:", passinData);
 
   //判断传入的数据是什么类型，确定表格的列
   const isBookData = isBook(passinData);

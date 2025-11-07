@@ -13,6 +13,8 @@ export interface Book {
   stock: number;
 }
 
+
+
 export interface BookFormData {
   bookName: string;
   author: string;
@@ -27,11 +29,13 @@ export interface QueryParams {
   category?: string;
   author?: string;
   title?: string;
+  name?: string; // 用于分类搜索
+  level?: string; // 用于分类搜索
   pageIndex?: number;
   pageSize?: number;
 }
 
-export interface Category {
+export interface BookType {
   label: string;
   value: string;
 }
@@ -57,7 +61,3 @@ export interface PaginationState {
   pageSize: number;
 }
 
-export interface DataformProps {
-  passinData: Book[];
-  onPaginationChange?: (pagination: PaginationState) => void;
-}

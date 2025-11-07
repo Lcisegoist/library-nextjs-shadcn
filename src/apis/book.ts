@@ -24,3 +24,14 @@ export const BookPost = async (params: Book) => {
     throw error;
   }
 }
+
+export const deleteBook = async (id: string) => {
+  try {
+    const result = await axiosInstance.delete(`/api/books/${id}`);
+    return result;
+  }
+  catch (error) {
+    console.error('删除数据失败:', error);
+    throw error;
+  }
+}

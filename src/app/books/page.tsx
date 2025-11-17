@@ -1,5 +1,7 @@
 "use client";
 
+import qs from "qs";
+import axiosInstance from "@/utils/request";
 import DataformTanstack from "@/components/DataformTanstack";
 import {
   Form,
@@ -10,7 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import Content from "@/components/Content";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import * as ReactHookForm from "react-hook-form";
@@ -30,13 +32,7 @@ import { getBookList } from "@/apis/book";
 // } from "@/components/ui/table";
 
 import SelectSearch from "@/components/ui/SelectSearch";
-import {
-  Book,
-  Category,
-  BookType,
-  PaginationState,
-  BOOK_CATEGORIES,
-} from "@/types";
+import { Book, BookType, PaginationState } from "@/types";
 
 const formSchema = z.object({
   title: z.string().optional(),
@@ -60,59 +56,19 @@ export function Bookform() {
 }
 
 export default function Books() {
-  //提交处理
-  function onSubmit1(values: z.infer<typeof formSchema>) {
-    console.log("values:", values);
-
-    getBookList({ ...values, ...currentPagination });
-  }
   const [bookData, setBookData] = useState<Book[]>([]);
+  const [bookCategoryList, setBookCategoryList] = useState<BookType[]>([]);
   //存储分页情况
   const [currentPagination, setCurrentPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-
-  // 使用 useRef 防止 React StrictMode 导致的重复请求
-  const hasFetchedRef = useRef(false);
-
-  //引入book的数据
-  useEffect(() => {
-    // 防止 StrictMode 导致的重复请求
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-
-    console.log("refreshed:");
-    async function fetchBooklist() {
-      try {
-        const data = await getBookList();
-        setBookData(data);
-      } catch (error) {
-        console.error("获取书籍列表失败:", error);
-      }
-    }
-    fetchBooklist();
-  }, []); // 空依赖数组，只在组件挂载时执行一次
-  // const router = useRouter();
-
-  // 处理分页变化 - 使用 useCallback 避免不必要的重新渲染
-  const handlePaginationChange = useCallback((pagination: PaginationState) => {
-    //pagination包含最新的页码信息
-    setCurrentPagination(pagination);
-    console.log("当前分页状态:", {
-      当前页码: pagination.pageIndex + 1, // 显示从1开始的页码
-      每页条数: pagination.pageSize,
-      原始pageIndex: pagination.pageIndex, // 从0开始
-    });
-
-    getBookList(pagination);
-  }, []);
-
-  // 使用 BOOK_CATEGORIES 数组自动生成分类选项
-  const categories: BookType[] = BOOK_CATEGORIES.map((cat) => ({
-    label: cat,
-    value: cat,
-  }));
+  //存储搜索内容
+  const [searchValues, setSearchValues] = useState<z.infer<typeof formSchema>>({
+    title: "",
+    author: "",
+    category: "",
+  });
   const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema), //每次表单变化时都会触发zod验证
     defaultValues: {
@@ -122,10 +78,84 @@ export default function Books() {
     },
   });
 
+  const fetchBookList = useCallback(() => {
+    const { title, author, category } = searchValues;
+
+    axiosInstance
+      .get<{ data: Book[]; total: number }>( // **假设API返回 { data: [], total: N } 结构**
+        `/api/books?${qs.stringify({
+          pageIndex: currentPagination.pageIndex, // pageIndex 是 0-based
+          pageSize: currentPagination.pageSize,
+          title,
+          author,
+          category,
+        })}`
+      )
+      .then((res) => {
+        console.log("fkres", res.data.length);
+        setBookData(res.data); // 更新当前页数据
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentPagination.pageIndex,
+    currentPagination.pageSize,
+    searchValues.title,
+    searchValues.author,
+    searchValues.category,
+  ]);
+
+  useEffect(() => {
+    //只在页面初始化调用
+    console.log("refreshed:");
+    async function fetchBooklist() {
+      try {
+        const data = await getBookList();
+        console.log("cluo", data);
+        setBookCategoryList(
+          data.map((item) => ({
+            label: item.name,
+            value: item.id.toString(),
+          }))
+        );
+        console.log("messi", bookCategoryList);
+        setBookData(data);
+      } catch (error) {
+        console.error("获取书籍列表失败:", error);
+      }
+    }
+    fetchBooklist();
+    //设置只初始化运行一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const handleDeleteSuccess = useCallback(() => {
+    fetchBookList();
+  }, [fetchBookList]);
+  const onSubmit1 = useCallback(
+    async (values: z.infer<typeof formSchema>) => {
+      console.log("book search values:", values);
+      setSearchValues(values);
+
+      try {
+        await getBookList({ ...currentPagination, ...values });
+        //setBookData(data);
+      } catch (error) {
+        console.error("获取书籍列表失败:", error);
+      }
+    },
+    [currentPagination]
+  );
+
+  // 处理分页变化 - 使用 useCallback 避免不必要的重新渲染
+  const handlePaginationChange = useCallback((pagination: PaginationState) => {
+    //pagination包含最新的页码信息
+    setCurrentPagination(pagination);
+    getBookList(pagination);
+  }, []);
+
   // function handleEdit() {
   //   router.push("/books/edit/id1");
   // }
-  console.log("book category", categories);
+
   return (
     <Content title="图书列表" url="/books/add">
       <>
@@ -181,7 +211,7 @@ export default function Books() {
                     <FormLabel>Category</FormLabel>
                     <FormControl>
                       <SelectSearch
-                        categories={categories}
+                        categories={bookCategoryList}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -200,6 +230,13 @@ export default function Books() {
                 type="reset"
                 onClick={() => {
                   form.reset();
+                  setSearchValues({
+                    title: "",
+                    author: "",
+                    category: "",
+                  });
+                  // 清空搜索时，也重置到第一页，并触发数据重新加载
+                  setCurrentPagination((prev) => ({ ...prev, pageIndex: 0 }));
                 }}
               >
                 Clear
@@ -208,61 +245,11 @@ export default function Books() {
           </form>
         </Form>
 
-        {/* <Table>
-        <TableCaption>the list of our books.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">书名</TableHead>
-            <TableHead>作者</TableHead>
-            <TableHead>分类</TableHead>
-            <TableHead>封面</TableHead>
-            <TableHead>描述</TableHead>
-            <TableHead>库存</TableHead>
-            <TableHead className="text-center">操作</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookExams.map((book) => (
-            <TableRow key={book.name}>
-              <TableCell className="font-medium">{book.name}</TableCell>
-              <TableCell>{book.author}</TableCell>
-              <TableCell>{book.category}</TableCell>
-              <TableCell>
-                <Image
-                  className="w-15 h-auto"
-                  src={`/covers/book${book.id}.jpg`}
-                  alt={book.name}
-                  width={100}
-                  height={100}
-                />
-              </TableCell>
-              <TableCell>{book.description}</TableCell>
-              <TableCell>{book.stock}</TableCell>
-              <TableCell className="text-center">
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="link"
-                    className="hover:cursor-pointer text-blue-500"
-                    onClick={handleEdit}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="link"
-                    className="hover:cursor-pointer text-red-500"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter></TableFooter>
-      </Table> */}
         <DataformTanstack
           passinData={bookData}
           onPaginationChange={handlePaginationChange}
+          onDeleteSuccess={handleDeleteSuccess}
+          currentPagination={currentPagination}
         />
       </>
     </Content>

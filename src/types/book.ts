@@ -25,12 +25,18 @@ export interface BookFormData {
   description: string;
 }
 
-export interface QueryParams {
+export interface BookResponse {
+  data: Book[];
+  total: number;
+  success: boolean;
+
+}
+
+export interface BookQueryType {
+  all?: boolean
   category?: string;
   author?: string;
   title?: string;
-  name?: string; // 用于分类搜索
-  level?: string; // 用于分类搜索
   pageIndex?: number;
   pageSize?: number;
 }

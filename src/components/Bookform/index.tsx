@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Book, BOOK_CATEGORIES } from "@/types/book";
+import { Book, BookType } from "@/types/book";
 import DatePicker from "@/components/ui/date-picker";
-import { BookPost } from "@/apis/book";
+import { BookPost, getBookList } from "@/apis/book";
 import {
   AlertDialog,
   AlertDialogFooter,
@@ -55,6 +55,7 @@ const formSchema = z.object({
 });
 
 const BookForm = () => {
+  const [bookCategoryList, setBookCategoryList] = useState<BookType[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [previewCover, setPreviewCover] = useState<string | null>(null);
   //接收form的信息
@@ -74,7 +75,25 @@ const BookForm = () => {
       description: "",
     },
   });
-
+  useEffect(() => {
+    async function fetchBooklist() {
+      try {
+        const data = await getBookList();
+        console.log("cluo", data);
+        setBookCategoryList(
+          data.map((item) => ({
+            label: item.name,
+            value: item.id.toString(),
+          }))
+        );
+        console.log("messi", bookCategoryList);
+      } catch (error) {
+        console.error("获取书籍列表失败:", error);
+      }
+    }
+    fetchBooklist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   //提交表单
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setFormData(values);
@@ -154,9 +173,9 @@ const BookForm = () => {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {BOOK_CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                    {bookCategoryList.map((category) => (
+                      <SelectItem key={category.label} value={category.value}>
+                        {category.label}
                       </SelectItem>
                     ))}
                     <SelectItem key="other" value="other">

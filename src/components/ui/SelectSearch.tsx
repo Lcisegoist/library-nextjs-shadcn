@@ -51,7 +51,7 @@ export default function SelectSearch({
             }`}
           >
             {value
-              ? categories.find((c) => c.value === value)?.value
+              ? categories.find((c) => c.value === value)?.label
               : label
               ? `Select ${label}...`
               : "Select..."}
@@ -62,11 +62,11 @@ export default function SelectSearch({
         <PopoverContent className="!w-full p-0 min-w-0">
           <Command className="w-full min-w-0">
             <CommandInput placeholder="Search..." />
-            <CommandEmpty>No category found.</CommandEmpty>
+            <CommandEmpty>No Result Found.</CommandEmpty>
             <CommandGroup>
               {categories.map((c) => (
                 <CommandItem
-                  key={c.value}
+                  key={c.label}
                   value={c.value}
                   onSelect={(currentValue) => {
                     onChange(currentValue === value ? "" : currentValue);

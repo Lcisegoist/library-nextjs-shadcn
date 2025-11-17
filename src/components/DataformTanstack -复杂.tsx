@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   useReactTable,
   getCoreRowModel,
-  getPaginationRowModel,
   flexRender,
   CellContext,
   HeaderGroup,
@@ -13,7 +12,7 @@ import {
   Cell,
 } from "@tanstack/react-table";
 import Image from "next/image";
-import { Book, DataformProps, Category, Borrow } from "@/types";
+import { Book, DataformProps, Category } from "@/types";
 import {
   Tooltip,
   TooltipTrigger,
@@ -44,22 +43,14 @@ import { useRouter } from "next/navigation";
 import { deleteBook } from "@/apis/book";
 import { deleteCategory } from "@/apis/category";
 import { toast } from "sonner";
-import { deleteBorrow } from "@/apis/borrow";
-// 统一表格数据类型
-type TableItem = Book | Category | Borrow;
-
 // 根据传入的passinData类型定义列
-function isBook(data: TableItem[]): data is Book[] {
+function isBook(data: Book[] | Category[]): data is Book[] {
   if (data.length === 0) return false;
   return "cover" in data[0];
 }
-function isCategory(data: TableItem[]): data is Category[] {
+function isCategory(data: Book[] | Category[]): data is Category[] {
   if (data.length === 0) return false;
   return "level" in data[0];
-}
-function isBorrow(data: TableItem[]): data is Borrow[] {
-  if (data.length === 0) return false;
-  return "borrowAt" in data[0];
 }
 
 const DataformTanstack = ({
@@ -67,14 +58,14 @@ const DataformTanstack = ({
   onPaginationChange,
   onDeleteSuccess,
   currentPagination,
+  totalCount,
 }: DataformProps) => {
   const router = useRouter();
-  console.log("表格渲染passinData:", passinData);
+  console.log("passinData:", passinData);
 
   //判断传入的数据是什么类型，确定表格的列
   const isBookData = isBook(passinData);
   const isCategoryData = isCategory(passinData);
-  const isBorrowData = isBorrow(passinData);
   console.log("isBookData:", isBookData);
   console.log("isCategoryData:", isCategoryData);
 
@@ -84,10 +75,6 @@ const DataformTanstack = ({
   const [categoryToDelete, setCategoryToDelete] =
     React.useState<Category | null>(null);
 
-  const [BookToDelete, setBookToDelete] = React.useState<Book | null>(null);
-  const [BorrowToDelete, setBorrowToDelete] = React.useState<Borrow | null>(
-    null
-  );
   //定义编辑删除函数
   const onBookEdit = React.useCallback(
     (item: Book) => {
@@ -99,9 +86,7 @@ const DataformTanstack = ({
 
   const onBookDelete = React.useCallback((item: Book) => {
     console.log("onBookDelete:", item);
-    setBookToDelete(item);
-    //deleteBook(item.id.toString());
-    setDeleteDialogOpen(true);
+    deleteBook(item.id.toString());
   }, []);
 
   const onCategoryEdit = React.useCallback(
@@ -118,22 +103,8 @@ const DataformTanstack = ({
     setDeleteDialogOpen(true);
   }, []);
 
-  const onBorrowEdit = React.useCallback(
-    (item: Borrow) => {
-      console.log("onBorrowEdit:", item);
-      router.push(`/borrows/edit/${item.id}`);
-    },
-    [router]
-  );
-
-  const onBorrowDelete = React.useCallback((item: Borrow) => {
-    console.log("onBorrowDelete:", item);
-    setBorrowToDelete(item);
-    setDeleteDialogOpen(true);
-  }, []);
-
   // 确认删除种类
-  const handleCategoryDelete = React.useCallback(async () => {
+  const handleConfirmDelete = React.useCallback(async () => {
     if (categoryToDelete) {
       console.log("categoryToDelete:", categoryToDelete);
       try {
@@ -143,48 +114,18 @@ const DataformTanstack = ({
         // 删除成功后调用回调，刷新数据
         onDeleteSuccess?.();
       } catch (error) {
-        console.error("删除category失败:", error);
-        toast.error("删除category失败");
+        console.error("删除失败:", error);
+        toast.error("删除失败");
       }
     }
   }, [categoryToDelete, onDeleteSuccess]);
-
-  const handleBookDelete = React.useCallback(async () => {
-    if (BookToDelete) {
-      try {
-        await deleteBook(BookToDelete.id.toString());
-        setDeleteDialogOpen(false);
-        setBookToDelete(null);
-        onDeleteSuccess?.();
-      } catch (e) {
-        console.log("删除book失败:", e);
-        toast.error("删除book失败");
-      }
-    }
-  }, [BookToDelete, onDeleteSuccess]);
-
-  const handleBorrowDelete = React.useCallback(async () => {
-    if (BorrowToDelete) {
-      try {
-        await deleteBorrow(BorrowToDelete.id);
-        setDeleteDialogOpen(false);
-        setBorrowToDelete(null);
-        onDeleteSuccess?.();
-      } catch (e) {
-        console.log("删除Borrow失败:", e);
-        toast.error("删除Borrow失败");
-      }
-    }
-  }, [BorrowToDelete, onDeleteSuccess]);
-
-  //根据数据类型设置不同的列，这是整个表格定义最臃肿的地方
   const columns = React.useMemo(() => {
     if (isBookData) {
       return [
         {
           accessorKey: "createdAt",
           header: "Created At",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const date = new Date((info.getValue() as number) * 1000);
             return date.toLocaleString();
           },
@@ -208,7 +149,7 @@ const DataformTanstack = ({
         {
           accessorKey: "cover",
           header: "Cover",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const value = info.getValue() as string;
             return (
               <Image
@@ -224,7 +165,7 @@ const DataformTanstack = ({
         {
           accessorKey: "description",
           header: "Description",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const text = (info.getValue() as string) || "";
             return (
               <Tooltip>
@@ -248,7 +189,7 @@ const DataformTanstack = ({
         {
           id: "actions",
           header: "操作",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const row = info.row.original as Book;
             return (
               <>
@@ -259,7 +200,7 @@ const DataformTanstack = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onBookEdit(row)}
-                        className="h-4 w-4 !p-0 hover:cursor-pointer"
+                        className="h-4 w-4 !p-0"
                       >
                         <Edit className="h-4 w-4" />
                         <span className="sr-only">编辑</span>
@@ -277,7 +218,7 @@ const DataformTanstack = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onBookDelete(row)}
-                        className="h-4 w-4 !p-0 text-destructive hover:text-destructive hover:cursor-pointer"
+                        className="h-4 w-4 !p-0 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">删除</span>
@@ -293,7 +234,6 @@ const DataformTanstack = ({
           },
         },
       ];
-      //category
     } else if (isCategoryData) {
       return [
         {
@@ -303,7 +243,7 @@ const DataformTanstack = ({
         {
           accessorKey: "level",
           header: "Level",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const value = info.getValue() as string;
             return (
               <Badge className={value == "1" ? "bg-green-500" : "bg-blue-500"}>
@@ -315,7 +255,7 @@ const DataformTanstack = ({
         {
           accessorKey: "parent",
           header: "Belonging Category",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const value = info.getValue() as Category;
             return <Badge className="bg-gray-400">{value.name}</Badge>;
           },
@@ -327,7 +267,7 @@ const DataformTanstack = ({
         {
           id: "actions",
           header: "操作",
-          cell: (info: CellContext<TableItem, unknown>) => {
+          cell: (info: CellContext<Book | Category, unknown>) => {
             const row = info.row.original as Category;
             return (
               <div className="flex items-center gap-2">
@@ -372,119 +312,19 @@ const DataformTanstack = ({
           },
         },
       ];
-      //borrow
-    } else if (isBorrowData) {
-      return [
-        {
-          id: "bookName",
-          header: "书名",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const borrow = info.row.original as Borrow;
-            return borrow.book.name ?? "-";
-          },
-        },
-        {
-          accessorKey: "status",
-          header: "状态",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const value = info.getValue() as Borrow["status"];
-            return (
-              <Badge
-                className={value === "out" ? "bg-amber-500" : "bg-emerald-500"}
-              >
-                {value === "out" ? "借出" : "在库"}
-              </Badge>
-            );
-          },
-        },
-        {
-          id: "borrower",
-          header: "借阅人",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const borrow = info.row.original as Borrow;
-            return borrow.user?.name ?? "-";
-          },
-        },
-        {
-          accessorKey: "borrowAt",
-          header: "借阅时间",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const borrow = info.row.original as Borrow;
-            return borrow.borrowAt ?? "-";
-          },
-        },
-        {
-          accessorKey: "returnAt",
-          header: "归还时间",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const borrow = info.row.original as Borrow;
-            return borrow.backAt ?? "-";
-          },
-        },
-        {
-          id: "actions",
-          header: "操作",
-          cell: (info: CellContext<TableItem, unknown>) => {
-            const row = info.row.original as Borrow;
-            return (
-              <>
-                {onBorrowEdit && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onBorrowEdit(row)}
-                        className="h-4 w-4 !p-0 hover:cursor-pointer"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">编辑</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>编辑</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                {onBorrowDelete && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onBorrowDelete(row)}
-                        className="h-4 w-4 !p-0 text-destructive hover:text-destructive hover:cursor-pointer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">删除</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>删除</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </>
-            );
-          },
-        },
-      ];
     }
     // 默認返回空數組，避免 undefined 導致錯誤
     return [];
   }, [
     isBookData,
     isCategoryData,
-    isBorrowData,
     onBookEdit,
     onBookDelete,
     onCategoryEdit,
     onCategoryDelete,
-    onBorrowEdit,
-    onBorrowDelete,
   ]);
   console.log("columns:", columns);
-  // 状态管理：如果父组件传入了 currentPagination，则使用它；否则使用内部状态
+  // 状态管理：使用父组件传入的分页状态，如果没有则使用内部状态
   const [internalPagination, setInternalPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -494,34 +334,27 @@ const DataformTanstack = ({
   // 使用父组件传入的分页状态，如果没有则使用内部状态
   const pagination = currentPagination || internalPagination;
 
-  // 同步父组件的分页状态到内部状态（当父组件传入 currentPagination 时）
-  React.useEffect(() => {
-    if (currentPagination) {
-      // 如果父组件传入了分页状态，确保内部状态同步
-      // 但不要触发 onPaginationChange，避免循环
-      setInternalPagination(currentPagination);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPagination?.pageIndex, currentPagination?.pageSize]);
-
   // 创建表格实例
   const table = useReactTable({
     data: passinData,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: !!currentPagination, // 如果父组件传入了分页状态，则使用手动分页
+    pageCount:
+      totalCount !== undefined
+        ? Math.ceil(totalCount / pagination.pageSize)
+        : -1,
     // 当分页状态改变时，通知父组件
     onPaginationChange: (updater) => {
-      //next:{pageIndex: 0, pageSize: 10}
       const next =
         typeof updater === "function" ? updater(pagination) : updater;
       console.log("next:", next);
 
       if (currentPagination) {
-        // 如果父组件控制分页，只通知父组件，不更新内部状态
+        // 如果父组件控制分页，则通知父组件更新
         onPaginationChange?.(next);
       } else {
-        // 否则更新内部状态并通知父组件
+        // 否则更新内部状态
         setInternalPagination(next);
         onPaginationChange?.(next);
       }
@@ -535,7 +368,11 @@ const DataformTanstack = ({
   const handleJumpPage = () => {
     const page = parseInt(jumpPage);
     if (!isNaN(page) && page > 0 && page <= table.getPageCount()) {
-      table.setPageIndex(page - 1);
+      if (currentPagination) {
+        onPaginationChange?.({ ...pagination, pageIndex: page - 1 });
+      } else {
+        table.setPageIndex(page - 1);
+      }
       setJumpPage("");
     }
   };
@@ -543,39 +380,32 @@ const DataformTanstack = ({
   return (
     <div className="w-full mt-7">
       {/* 种类删除确认弹窗 */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除？</AlertDialogTitle>
-            <AlertDialogDescription>
-              你确定要删除 &quot;
-              {categoryToDelete?.name ||
-                BookToDelete?.name ||
-                BorrowToDelete?.book.name}
-              &quot; 吗？此操作无法撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
-              取消
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (BookToDelete) {
-                  await handleBookDelete();
-                } else if (categoryToDelete) {
-                  await handleCategoryDelete();
-                } else if (BorrowToDelete) {
-                  await handleBorrowDelete();
-                }
-                toast.success("删除成功");
-              }}
-            >
-              确认
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isCategoryData && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>确认删除？</AlertDialogTitle>
+              <AlertDialogDescription>
+                你确定要删除 &quot;{categoryToDelete?.name}&quot;
+                吗？此操作无法撤销。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>
+                取消
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await handleConfirmDelete();
+                  toast.success("删除成功");
+                }}
+              >
+                确认
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* 表格 */}
       <div className="border rounded-lg max-h-[60vh] overflow-y-auto">
@@ -583,10 +413,10 @@ const DataformTanstack = ({
           <thead className="bg-gray-100">
             {table
               .getHeaderGroups()
-              .map((headerGroup: HeaderGroup<TableItem>) => (
+              .map((headerGroup: HeaderGroup<Book | Category>) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(
-                    (header: Header<TableItem, unknown>) => (
+                    (header: Header<Book | Category, unknown>) => (
                       <th
                         key={header.id}
                         className="px-4 py-3 text-left text-sm font-semibold text-gray-700"
@@ -606,14 +436,14 @@ const DataformTanstack = ({
           <tbody>
             {table
               .getRowModel()
-              .rows.map((row: Row<TableItem>, index: number) => (
+              .rows.map((row: Row<Book | Category>, index: number) => (
                 <tr
                   key={row.id}
                   className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                 >
                   {row
                     .getVisibleCells()
-                    .map((cell: Cell<TableItem, unknown>) => (
+                    .map((cell: Cell<Book | Category, unknown>) => (
                       <td
                         key={cell.id}
                         className="px-4 py-3 text-sm text-gray-900 align-middle"
@@ -638,7 +468,20 @@ const DataformTanstack = ({
           <Select
             value={String(pagination.pageSize)}
             onValueChange={(value) => {
-              table.setPageSize(Number(value));
+              const newPageSize = Number(value);
+              // 改变 pageSize 时，重置到第一页
+              if (currentPagination) {
+                // 如果父组件控制分页，通过回调通知父组件
+                onPaginationChange?.({
+                  ...pagination,
+                  pageSize: newPageSize,
+                  pageIndex: 0,
+                });
+              } else {
+                // 否则直接设置
+                table.setPageSize(newPageSize);
+                table.setPageIndex(0);
+              }
             }}
           >
             <SelectTrigger className="w-[100px]">
@@ -668,7 +511,13 @@ const DataformTanstack = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.setPageIndex(0)}
+            onClick={() => {
+              if (currentPagination) {
+                onPaginationChange?.({ ...pagination, pageIndex: 0 });
+              } else {
+                table.setPageIndex(0);
+              }
+            }}
             disabled={!table.getCanPreviousPage()}
           >
             首页
@@ -679,7 +528,14 @@ const DataformTanstack = ({
             variant="outline"
             size="sm"
             onClick={() => {
-              table.previousPage();
+              if (currentPagination) {
+                onPaginationChange?.({
+                  ...pagination,
+                  pageIndex: pagination.pageIndex - 1,
+                });
+              } else {
+                table.previousPage();
+              }
             }}
             disabled={!table.getCanPreviousPage()}
           >
@@ -690,7 +546,16 @@ const DataformTanstack = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
+            onClick={() => {
+              if (currentPagination) {
+                onPaginationChange?.({
+                  ...pagination,
+                  pageIndex: pagination.pageIndex + 1,
+                });
+              } else {
+                table.nextPage();
+              }
+            }}
             disabled={!table.getCanNextPage()}
           >
             下一页
@@ -700,7 +565,14 @@ const DataformTanstack = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            onClick={() => {
+              const lastPage = table.getPageCount() - 1;
+              if (currentPagination) {
+                onPaginationChange?.({ ...pagination, pageIndex: lastPage });
+              } else {
+                table.setPageIndex(lastPage);
+              }
+            }}
             disabled={!table.getCanNextPage()}
           >
             末页

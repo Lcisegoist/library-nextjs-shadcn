@@ -7,6 +7,7 @@
 export * from './book';
 export * from './category';
 export * from './form';
+export * from './borrow';
 // 可以在这里添加其他类型的导出
 // export type { User, UserRole } from './user';
 // export type { ApiResponse, ApiError } from './api';

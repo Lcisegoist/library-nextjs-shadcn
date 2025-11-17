@@ -40,7 +40,7 @@ const axiosInstance = (config: AxiosRequestConfig): AxiosInstanceType => {
       console.log('ResponseRes:', res);
       const { data } = res;
       console.log('Response data:', data); // 调试日志
-      return data.data;
+      return data;
     },
     function (error) {
       // 请求失败或非 2xx 状态码会进入这里

@@ -2,7 +2,7 @@ import BookForm from "@/components/Bookform";
 import Content from "@/components/Content";
 export default function Books() {
   return (
-    <Content title="修改信息">
+    <Content title="编辑图书">
       <BookForm />
     </Content>
   );

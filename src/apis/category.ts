@@ -1,12 +1,12 @@
-import { Category, QueryParams } from "@/types";
+import { Category, CategoryResponse, CategoryQueryType } from "@/types";
 import qs from "qs";
 import axiosInstance from "@/utils/request";
-export const getCategoryList = async (params?: QueryParams): Promise<Category[]> => {
+export const getCategoryList = async (params?: CategoryQueryType): Promise<Category[]> => {
   const url = `/api/category?${qs.stringify(params)}`;
 
   try {
-    const result = await axiosInstance.get<Category[]>(url);
-    return result;
+    const result = await axiosInstance.get<CategoryResponse>(url);
+    return result.data;
   }
   catch (error) {
     console.error('请求数据失败:', error);

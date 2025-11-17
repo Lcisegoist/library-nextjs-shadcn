@@ -30,7 +30,7 @@ import { getCategoryList } from "@/apis/category";
 //   TableRow,
 // } from "@/components/ui/table";
 
-import { Category, PaginationState } from "@/types";
+import { Category, PaginationState, QueryParams } from "@/types";
 import SelectSearch from "@/components/ui/SelectSearch";
 
 const formSchema = z.object({
@@ -58,13 +58,19 @@ const Level_example = [
 // }
 
 export default function Categorys() {
+  //存储种类表单的值
+  //setCategoryData只能在初始时使用，不然后续更新都会导致页面重新渲染
   const [categoryData, setCategoryData] = useState<Category[]>([]);
   //存储分页情况
   const [currentPagination, setCurrentPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-
+  //查询表单的值
+  const [formValues, setFormValues] = useState<z.infer<typeof formSchema>>({
+    name: "",
+    level: "",
+  });
   const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema), //每次表单变化时都会触发zod验证
     defaultValues: {
@@ -73,13 +79,22 @@ export default function Categorys() {
     },
   });
 
-  // 统一的获取数据函数，带上表单和分页信息
+  //使用fetchCategoryList就刷新,使用getCategoryList就不
+  // 统一的获取数据函数，可以带上表单和分页信息，同时设置CategoryData，但这样会导致页面刷新(mock数据随机变化)
+  const fetchCategoryList = useCallback(async (params?: QueryParams) => {
+    try {
+      const data = await getCategoryList(params);
+      setCategoryData(data);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
   // 注意：不将 form 作为依赖，因为 form.getValues() 是方法调用，总是能获取最新值
 
   // 初始加载和分页变化时获取数据
   useEffect(() => {
     console.log("refreshed:");
-    async function fetchBooklist() {
+    async function InitialgetCategorylist() {
       try {
         const data = await getCategoryList();
         setCategoryData(data);
@@ -87,26 +102,32 @@ export default function Categorys() {
         console.error("获取书籍列表失败:", error);
       }
     }
-    fetchBooklist();
+    InitialgetCategorylist();
   }, []);
 
   //搜索
-  const onSubmit1 = useCallback(async (values: z.infer<typeof formSchema>) => {
-    console.log("category values:", values);
-    // 点击搜索时，自动回到第一页
-    setCurrentPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    // 注意：分页变化会触发 fetchCategorylist，所以这里不需要手动调用
-  }, []);
+  const onSubmit1 = useCallback(
+    (values: z.infer<typeof formSchema>) => {
+      console.log("category values:", values);
+      setFormValues(values);
+      // 点击搜索时，自动回到第一页
+      setCurrentPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      fetchCategoryList({ ...values, ...currentPagination });
+      // 注意：分页变化会触发 fetchCategorylist，所以这里不需要手动调用
+    },
+    [fetchCategoryList, currentPagination]
+  );
 
   //分页变化（由 DataformTanstack 调用）
   const handlePaginationChange = useCallback((pagination: PaginationState) => {
     setCurrentPagination(pagination);
+    getCategoryList(pagination);
   }, []);
 
   //删除后刷新
-  // const handleDeleteSuccess = useCallback(() => {
-  //   fetchCategorylist();
-  // }, [fetchCategorylist]);
+  const handleDeleteSuccess = useCallback(() => {
+    getCategoryList({ ...currentPagination, ...formValues });
+  }, [currentPagination, formValues]);
 
   //当分页变化时自动请求
   // useEffect(() => {
@@ -172,7 +193,12 @@ export default function Categorys() {
               <Button
                 type="reset"
                 onClick={() => {
+                  //清空搜索表单的值
                   form.reset();
+                  setFormValues({
+                    name: "",
+                    level: "",
+                  });
                 }}
               >
                 Clear
@@ -181,62 +207,10 @@ export default function Categorys() {
           </form>
         </Form>
 
-        {/* <Table>
-        <TableCaption>the list of our books.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">书名</TableHead>
-            <TableHead>作者</TableHead>
-            <TableHead>分类</TableHead>
-            <TableHead>封面</TableHead>
-            <TableHead>描述</TableHead>
-            <TableHead>库存</TableHead>
-            <TableHead className="text-center">操作</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookExams.map((book) => (
-            <TableRow key={book.name}>
-              <TableCell className="font-medium">{book.name}</TableCell>
-              <TableCell>{book.author}</TableCell>
-              <TableCell>{book.category}</TableCell>
-              <TableCell>
-                <Image
-                  className="w-15 h-auto"
-                  src={`/covers/book${book.id}.jpg`}
-                  alt={book.name}
-                  width={100}
-                  height={100}
-                />
-              </TableCell>
-              <TableCell>{book.description}</TableCell>
-              <TableCell>{book.stock}</TableCell>
-              <TableCell className="text-center">
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="link"
-                    className="hover:cursor-pointer text-blue-500"
-                    onClick={handleEdit}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="link"
-                    className="hover:cursor-pointer text-red-500"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter></TableFooter>
-      </Table> */}
         <DataformTanstack
           passinData={categoryData}
           onPaginationChange={handlePaginationChange}
-          // onDeleteSuccess={handleDeleteSuccess}
+          onDeleteSuccess={handleDeleteSuccess}
         />
       </>
     </Content>

@@ -2,7 +2,7 @@ import CategoryForm from "@/components/Categoryform";
 import Content from "@/components/Content";
 export default function Books() {
   return (
-    <Content title="编辑分类">
+    <Content title="添加分类">
       <CategoryForm />
     </Content>
   );

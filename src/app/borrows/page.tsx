@@ -14,81 +14,73 @@ import {
 } from "@/components/ui/form";
 import Content from "@/components/Content";
 import { useEffect, useState, useCallback } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import * as ReactHookForm from "react-hook-form";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { Category, PaginationState } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Borrow, PaginationState } from "@/types";
 import SelectSearch from "@/components/ui/SelectSearch";
-import { getCategoryList } from "@/apis/category";
+import { getBorrowList } from "@/apis/borrow";
 
 const formSchema = z.object({
-  name: z.string().optional(),
-  level: z.number().optional(),
+  bookName: z.string(),
+  status: z.string(),
+  userName: z.string(),
 });
-export const Level_example = [
-  { label: "Level 1", value: "1" },
-  { label: "Level 2", value: "2" },
-  { label: "Level 3", value: "3" },
-];
 
-export default function Categorys() {
-  const [categoryData, setCategoryData] = useState<Category[]>([]);
+export default function Borrows() {
+  const [borrowlist, setBorrowList] = useState<Borrow[]>([]);
   const [currentPagination, setCurrentPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
   const [formValues, setFormValues] = useState<z.infer<typeof formSchema>>({
-    name: "",
-    level: 0,
+    bookName: "",
+    userName: "",
+    status: "",
   });
   const form = ReactHookForm.useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      level: 0,
+      bookName: "",
+      userName: "",
+      status: "",
     },
   });
-
-  const fetchCategoryList = useCallback(() => {
-    const { name, level } = formValues;
-
+  const fetchborrowList = useCallback(() => {
     axiosInstance
-      .get<{ data: Category[]; total: number }>( // **假设API返回 { data: [], total: N } 结构**
-        `/api/category?${qs.stringify({
+      .get<{ data: Borrow[]; total: number }>( // **假设API返回 { data: [], total: N } 结构**
+        `/api/borrows?${qs.stringify({
           pageIndex: currentPagination.pageIndex, // pageIndex 是 0-based
           pageSize: currentPagination.pageSize,
-          name,
-          level,
         })}`
       )
       .then((res) => {
         console.log("fkres", res.data.length);
-        setCategoryData(res.data); // 更新当前页数据
+        setBorrowList(res.data); // 更新当前页数据
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentPagination.pageIndex,
-    currentPagination.pageSize,
-    formValues.level,
-    formValues.name,
-  ]);
+  }, [currentPagination.pageIndex, currentPagination.pageSize]);
 
   useEffect(() => {
     //只在页面初始化调用
     console.log("refreshed:");
-    async function fetchBooklist() {
+    async function fetchBorrowlist() {
       try {
-        const data = await getCategoryList();
-        setCategoryData(data);
+        const data = await getBorrowList();
+        setBorrowList(data);
       } catch (error) {
         console.error("获取书籍列表失败:", error);
       }
     }
-    fetchBooklist();
+    fetchBorrowlist();
   }, []);
 
   const onSubmit1 = useCallback(
@@ -96,7 +88,7 @@ export default function Categorys() {
       console.log("category search values:", values);
       setFormValues(values);
       try {
-        await getCategoryList({ ...currentPagination, ...values });
+        await getBorrowList({ ...currentPagination, ...values });
         //不更新数据
         //setCategoryData(data);
       } catch (error) {
@@ -109,16 +101,16 @@ export default function Categorys() {
   //修改分页不自动请求数据
   const handlePaginationChange = useCallback((pagination: PaginationState) => {
     setCurrentPagination(pagination); // 更新状态（异步，不会立即生效）
-    getCategoryList(pagination);
+    getBorrowList(pagination);
   }, []);
 
   const handleDeleteSuccess = useCallback(() => {
     // 删除成功后，重新获取数据，确保使用当前的搜索条件和分页
-    fetchCategoryList();
-  }, [fetchCategoryList]);
+    fetchborrowList();
+  }, [fetchborrowList]);
 
   return (
-    <Content title="分类列表" url="/category/add">
+    <Content title="借阅列表" url="/borrows/add">
       <>
         <Form {...form}>
           <form
@@ -128,15 +120,18 @@ export default function Categorys() {
             <div className="w-52">
               <FormField
                 control={form.control}
-                name="name"
+                name="bookName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>书名</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Book title"
-                        className="w-full"
-                        {...field}
+                      <SelectSearch
+                        categories={borrowlist.map((item) => ({
+                          label: item.book.name,
+                          value: item.book.id.toString(),
+                        }))}
+                        value={field.value.toString()}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -144,17 +139,47 @@ export default function Categorys() {
                 )}
               />
             </div>
+            {/* 状态 */}
+            <div className="w-28">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>状态</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择状态" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="out">借出</SelectItem>
+                          <SelectItem value="in">在库</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* 借阅人 */}
             <div className="w-52">
               <FormField
                 control={form.control}
-                name="level"
+                name="userName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Level</FormLabel>
+                    <FormLabel>借阅人</FormLabel>
                     <FormControl>
                       <SelectSearch
-                        label="level"
-                        categories={Level_example}
+                        categories={borrowlist.map((item) => ({
+                          label: item.user.name,
+                          value: item.user.id,
+                        }))}
                         value={field.value.toString()}
                         onChange={field.onChange}
                       />
@@ -174,8 +199,9 @@ export default function Categorys() {
                 onClick={() => {
                   form.reset();
                   setFormValues({
-                    name: "",
-                    level: 0,
+                    bookName: "",
+                    userName: "",
+                    status: "",
                   });
                   // 清空搜索时，也重置到第一页，并触发数据重新加载
                   setCurrentPagination((prev) => ({ ...prev, pageIndex: 0 }));
@@ -188,7 +214,7 @@ export default function Categorys() {
         </Form>
 
         <DataformTanstack
-          passinData={categoryData}
+          passinData={borrowlist}
           onPaginationChange={handlePaginationChange}
           onDeleteSuccess={handleDeleteSuccess}
           currentPagination={currentPagination}

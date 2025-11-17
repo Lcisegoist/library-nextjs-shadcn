@@ -1,12 +1,12 @@
-import { Book, QueryParams } from "@/types";
+import { Book, BookResponse, BookQueryType } from "@/types";
 import qs from "qs";
 import axiosInstance from "@/utils/request";
-export const getBookList = async (params?: QueryParams): Promise<Book[]> => {
+export const getBookList = async (params?: BookQueryType): Promise<Book[]> => {
   const url = `/api/books?${qs.stringify(params)}`;
 
   try {
-    const result = await axiosInstance.get<Book[]>(url);
-    return result;
+    const result = await axiosInstance.get<BookResponse>(url);
+    return result.data;
   }
   catch (error) {
     console.error('请求数据失败:', error);
